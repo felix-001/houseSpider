@@ -16,6 +16,10 @@ class Parser(object):
     pass
 
 class Writer(object):
+    def write():
+        pass
+    def SetWriteMethod( method ):
+        pass
     pass
 
 class Spider(object):
@@ -37,6 +41,7 @@ def main():
     spider = Spider()
     logger = Logger()
     writer = Writer()
+    writer.SetWriteMethod('excel')
     pageNum = spider.GetPageNum()
     logger.log( pageNum )
     for index in range( pageNum ):
