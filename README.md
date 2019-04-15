@@ -1,2 +1,0 @@
-# houseSpider
-house spider
