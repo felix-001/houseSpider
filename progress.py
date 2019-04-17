@@ -9,7 +9,7 @@ class ShowProcess():
     """
     i = 0 # 当前的处理进度
     max_steps = 0 # 总共需要处理的次数
-    max_arrow = 50 #进度条的长度
+    max_arrow = 100 #进度条的长度
     infoDone = 'done'
 
     # 初始化函数，需要知道总共的处理次数

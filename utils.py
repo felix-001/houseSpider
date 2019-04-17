@@ -91,7 +91,7 @@ class ProxyManager(object):
         latest_time = self.host_time_map.get(host, 0)
         interval = time.time() - latest_time
         if interval < self.interval:
-            logging.info("%s waiting", proxy)
+            #logging.info("%s waiting", proxy)
             time.sleep(self.interval)
         self.host_time_map[host] = time.time()
         #logging.info( proxy )

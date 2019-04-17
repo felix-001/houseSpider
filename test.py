@@ -90,11 +90,25 @@ def gevent_test():
             ]
 
     for url in url_list:
+        pass
 
-
+def file_io_test():
+    f = open("./a.txt", "w+")
+    d = {}
+    d['key1'] = "hello"
+    d['key2'] = "world"
+    d['url'] = "www.baidu.com"
+    f.write(str(d)+'\n')
+    d2 = {}
+    d2['key1'] = "good"
+    d2['key2'] = "luck"
+    d2['url'] = "www.googole.com"
+    f.write( str(d2) );
+            
 
 
 if __name__ == '__main__':
     #proxy_test()
     #gevent_queue_test()
-    gevent_test()
+    #gevent_test()
+    file_io_test()
