@@ -40,7 +40,7 @@ expected_groups = [
     (56297, u'北京个人租房 （真房源|无中介）'),
     (257523, u'北京租房房东联盟(中介勿扰) '),
 ]
-expected_query_strs = (u'立水桥', u'天通苑', u'霍营', u'回龙观东大街', )
+expected_query_strs = ( u'天通苑', u'霍营', u'回龙观东大街', )
 
 
 group_search_url = 'http://www.douban.com/group/search'
@@ -154,6 +154,7 @@ def uniq_and_sort(posts):
                 u'女生' in title,
                 u'随时入住' in title,
                 u'阳隔' in title,
+                u'精选房源' in title,
                 u'法信' in title]):
             continue
 
