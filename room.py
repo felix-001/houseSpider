@@ -14,6 +14,7 @@ from lxml import etree
 words_too_less_cnt = 0
 no_need_keyword_cnt = 0
 filter_keyword_cnt = 0
+repeat_title_cnt = 0
 total_posts = 0
 total_posts_search = 0
 cur = 0
@@ -106,10 +107,11 @@ def filter_posts(posts):
                 posts.remove(post)
                 break
 
-def check_post_valid(post):
+def check_post_valid(post, posts):
     global words_too_less_cnt
     global no_need_keyword_cnt
     global filter_keyword_cnt
+    global repeat_title_cnt
 
     found = 0
 
@@ -124,6 +126,12 @@ def check_post_valid(post):
     if found == 0:
         no_need_keyword_cnt += 1
         return False
+
+    for item in posts:
+        title,url = item
+        if post['title'] == title:
+            repeat_title_cnt += 1
+            return False
 
     for keyword in config.TITLE_FILTER_KEYWRODS:
         if keyword.encode('utf8') in post['content']:
@@ -177,7 +185,10 @@ async def get_douban_detail_page(url, posts):
         logging.info("fetch detail page:%s error", url )
         return None
     post = parse_detail_page( html )
-    if check_post_valid(post):
+    if post is None:
+        logging.error("parse %s error", url)
+        return None
+    if check_post_valid(post, posts):
         res = ( post['title'], url )
         posts.append(res)
     show_progress(cur, total_posts)
@@ -200,8 +211,8 @@ async def get_douban_posts():
         tasks.append(event_loop.create_task(get_douban_detail_page(url, all_posts)))
     done, pending = await asyncio.wait(tasks)
     assert bool(pending) is False
-    logging.info("final leave %d posts, words_too_less_cnt : %d no_need_keyword_cnt : %d filter_keyword_cnt:%d",
-            len(all_posts), words_too_less_cnt, no_need_keyword_cnt, filter_keyword_cnt )
+    logging.info("final leave %d posts, words_too_less_cnt : %d no_need_keyword_cnt : %d filter_keyword_cnt:%d repeat_title_cnt:%d", 
+            len(all_posts), words_too_less_cnt, no_need_keyword_cnt, filter_keyword_cnt, repeat_title_cnt )
     f = open('douban.md', 'w')
     for title,url in all_posts:
         md = '- [ '+ title.decode('utf8')+ ' ](' + url + ')' + '\n'
