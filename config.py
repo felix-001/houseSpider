@@ -3,6 +3,27 @@ DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36"
 )
 
+RULES = {
+    # 每个帖子项
+    "topic_item": "//table[@class='olt']/tr",
+    "url_list": "//table[@class='olt']/tr/td[@class='title']/a/@href",
+    # 列表元素
+    "title": "td[@class='title']/a/@title",
+    "author": "td[@nowrap='nowrap'][1]/a/text()",
+    "reply": "td[@nowrap='nowrap'][2]/text()",
+    "last_reply_time": "td[@class='time']/text()",
+    "url": "td[@class='title']/a/@href",
+    # 帖子详情
+    "detail_title_sm": "//td[@class='tablecc']/text()",
+    # 完整标题
+    "detail_title_lg": "//div[@id='content']/h1/text()",
+    "create_time": "//span[@class='color-green']/text()",
+    "detail_author": "//span[@class='from']/a/text()",
+    "content": "//div[@class='topic-richtext']/p/text()",
+    "content2": "//div[@class='topic-richtext']/p/text()",
+}
+
+
 GROUPS = [
     (26926,     u'北京租房豆瓣'),
     (279962,    u'北京租房（非中介）'),

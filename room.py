@@ -9,8 +9,15 @@ import httpreq
 from functools import partial
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from lxml import etree
 
-dbg_get_url_err_count = 0
+words_too_less_cnt = 0
+no_need_keyword_cnt = 0
+filter_keyword_cnt = 0
+total_posts = 0
+total_posts_search = 0
+cur = 0
+cur_search = 0
 
 def log_init():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s|%(filename)s:%(lineno)d|%(levelname)s: %(message)s')
@@ -27,7 +34,7 @@ def gen_search_params(group_id, q):
         ))
     return params
 
-def get_douban_html(url, group, q):
+def get_douban_html(url, group=None, q=None):
     params = None
 
     if group is not None:
@@ -61,6 +68,8 @@ def parse_search_result(html):
     return posts
 
 async def search_douban_group_by_query(group, q, posts):
+    global cur_search
+
     event_loop = asyncio.get_event_loop()
     html = await event_loop.run_in_executor(
         None,
@@ -71,11 +80,15 @@ async def search_douban_group_by_query(group, q, posts):
         return None
     res = parse_search_result( html )
     posts.extend(res)
+    show_progress( cur_search, total_posts_search )
+    cur_search += 1
 
 async def search_douban_groups():
+    global total_posts_search
     all_posts = []
     tasks = []
 
+    total_posts_search = len(config.GROUPS) * len(config.KEYWORDS)
     event_loop = asyncio.get_event_loop()
     for group in config.GROUPS:
         for q in config.KEYWORDS:
@@ -91,16 +104,95 @@ def filter_posts(posts):
             if title.find(keyword) > 0:
                 posts.remove(post)
                 break
-    logging.info("len:%d", len(posts))
+
+def check_post_valid(post):
+    global words_too_less_cnt
+    global no_need_keyword_cnt
+    global filter_keyword_cnt
+
+    if len(post['content']) < 200:
+        words_too_less_cnt += 1
+        return False
+    if len(config.KEYWORDS) > 0:
+        for keyword in config.KEYWORDS:
+            if keyword.encode('utf8') not in post['content']:
+                no_need_keyword_cnt += 1
+                return False
+    for keyword in config.TITLE_FILTER_KEYWRODS:
+        if keyword.encode('utf8') in post['content']:
+            filter_keyword_cnt += 1
+            return False
+    return True
+
+def extract( regx, body, multi=False):
+    if isinstance(body, str):
+        body = etree.HTML(body)
+        res = body.xpath(regx)
+        if multi:
+            return res
+        return res[0] if res else None
+
+def parse_detail_page(html):
+    post = {}
+
+    title = extract(config.RULES["detail_title_sm"], html) or extract(config.RULES["detail_title_lg"], html)
+    if title is None:
+        logging.error("parse title error")
+        return None
+    post["title"] = title.strip().encode("utf8")
+    post["create_time"] = extract( config.RULES["create_time"], html).strip().encode('utf8')
+    post["author"] = extract( config.RULES["detail_author"], html).strip().encode('utf8')
+    post["content"] = '\n'.join( extract(config.RULES["content"], html, multi=True) \
+            or extract(config.RULES["content2"], html, multi=True) ).encode('utf8')
+    return post
+
+def show_progress( cur, total):
+    percent = cur*100.0/total
+    progress = '[ ' + '%.2f' % percent + '% ] ' + str(cur)+'/'+str(total)+'\r'
+    sys.stdout.write(progress)
+    sys.stdout.flush()
+    if cur >= total:
+        print('Done.')
+
+async def get_douban_detail_page(url, posts):
+    global cur
+
+    event_loop = asyncio.get_event_loop()
+    html = await event_loop.run_in_executor(
+        None,
+        partial( get_douban_html, url ) 
+    )
+    if html is None:
+        logging.info("fetch detail page:%s error", url )
+        return None
+    post = parse_detail_page( html )
+    if check_post_valid(post):
+        res = ( post['title'], url )
+        posts.append(res)
+    show_progress(cur, total_posts)
+    cur += 1
 
 async def get_douban_posts():
+    global total_posts
+    tasks = []
+    all_posts = []
+
+    logging.info("search all the groups...")
     posts = await search_douban_groups()
-    logging.info("len:%d", len(posts))
+    logging.info("total crawled %d posts", len(posts))
     filter_posts( posts )
-    logging.info("len:%d", len(posts))
+    logging.info("after filter, levae %d posts", len(posts))
+    logging.info("search all the post detail...")
+    total_posts = len(posts)
+    event_loop = asyncio.get_event_loop()
     for url,title in posts:
+        tasks.append(event_loop.create_task(get_douban_detail_page(url, all_posts)))
+    done, pending = await asyncio.wait(tasks)
+    assert bool(pending) is False
+    logging.info("final leave %d posts, words_too_less_cnt : %d no_need_keyword_cnt : %d filter_keyword_cnt:%d",
+            len(all_posts), words_too_less_cnt, no_need_keyword_cnt, filter_keyword_cnt )
+    for url,title in all_posts:
         print('- [ ', title, ' ](', url, ')')
-#    logging.info("posts:%s", str(posts))
 
 def main():
     log_init()
