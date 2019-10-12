@@ -70,6 +70,7 @@ def parse_search_result(html):
 async def search_douban_group_by_query(group, q, posts):
     global cur_search
 
+    show_progress( cur_search, total_posts_search )
     event_loop = asyncio.get_event_loop()
     html = await event_loop.run_in_executor(
         None,
@@ -110,14 +111,20 @@ def check_post_valid(post):
     global no_need_keyword_cnt
     global filter_keyword_cnt
 
+    found = 0
+
     if len(post['content']) < 200:
         words_too_less_cnt += 1
         return False
     if len(config.KEYWORDS) > 0:
         for keyword in config.KEYWORDS:
-            if keyword.encode('utf8') not in post['content']:
-                no_need_keyword_cnt += 1
-                return False
+            if keyword.encode('utf8') in post['content']:
+                found = 1
+                break
+    if found == 0:
+        no_need_keyword_cnt += 1
+        return False
+
     for keyword in config.TITLE_FILTER_KEYWRODS:
         if keyword.encode('utf8') in post['content']:
             filter_keyword_cnt += 1
@@ -158,6 +165,7 @@ async def get_douban_detail_page(url, posts):
     global cur
 
     event_loop = asyncio.get_event_loop()
+    show_progress(cur, total_posts)
     html = await event_loop.run_in_executor(
         None,
         partial( get_douban_html, url ) 
@@ -191,11 +199,15 @@ async def get_douban_posts():
     assert bool(pending) is False
     logging.info("final leave %d posts, words_too_less_cnt : %d no_need_keyword_cnt : %d filter_keyword_cnt:%d",
             len(all_posts), words_too_less_cnt, no_need_keyword_cnt, filter_keyword_cnt )
-    for url,title in all_posts:
-        print('- [ ', title, ' ](', url, ')')
+    f = open('douban.md', 'w')
+    for title,url in all_posts:
+        md = '- [ '+ title.decode('utf8')+ ' ](' + url + ')' + '\n'
+        f.write(md)
+    f.close()
 
 def main():
     log_init()
+    logging.info("start...")
     proxymanager.get_high_anonymous_proxy_list()
     event_loop = asyncio.get_event_loop()
     event_loop.run_until_complete(get_douban_posts())
