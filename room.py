@@ -129,6 +129,9 @@ def check_post_valid(post):
         if keyword.encode('utf8') in post['content']:
             filter_keyword_cnt += 1
             return False
+        if keyword.encode('utf8') in post['title']:
+            filter_keyword_cnt += 1
+            return False
     return True
 
 def extract( regx, body, multi=False):
