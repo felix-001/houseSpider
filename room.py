@@ -213,10 +213,15 @@ async def get_douban_posts():
     assert bool(pending) is False
     logging.info("final leave %d posts, words_too_less_cnt : %d no_need_keyword_cnt : %d filter_keyword_cnt:%d repeat_title_cnt:%d", 
             len(all_posts), words_too_less_cnt, no_need_keyword_cnt, filter_keyword_cnt, repeat_title_cnt )
-    f = open('douban.md', 'w')
+    f = open('douban.html', 'w')
+    f.write('<html>')
+    f.write('<body>')
     for title,url in all_posts:
-        md = '- [ '+ title.decode('utf8')+ ' ](' + url + ')' + '\n'
-        f.write(md)
+#        md = '- [ '+ title.decode('utf8')+ ' ](' + url + ')' + '\n'
+        w = '<a href=\"' + url + '\">' + title.decode('utf8') + '</a>' + '<br>'
+        f.write(w)
+    f.write('</html>')
+    f.write('</body>')
     f.close()
 
 def main():
