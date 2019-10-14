@@ -7,6 +7,11 @@
 ## TODO LIST
 - [ ] 浏览过的无用的url，加入black list
 
+## 运行
+```
+python3 root.py
+```
+
 ## author
 - mail:rigensen@qq.com
 
