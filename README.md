@@ -9,7 +9,7 @@
 
 ## 运行
 ```
-python3 root.py
+python3 room.py
 ```
 
 ## author
