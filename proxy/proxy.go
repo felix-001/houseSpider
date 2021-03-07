@@ -30,7 +30,7 @@ type Context struct {
 }
 
 func New(url string) *Context {
-	return &Context{url: url}
+	return &Context{url: url, proxies: map[string]Proxy{}}
 }
 
 func (ctx *Context) parse(html string) {
@@ -51,6 +51,7 @@ func (ctx *Context) parse(html string) {
 		proxy := Proxy{url: url}
 		ctx.proxies[url] = proxy
 	}
+	log.Printf("total got %d proxies", len(ctx.proxies))
 }
 
 func (ctx *Context) Fetch() {

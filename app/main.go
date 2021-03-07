@@ -2,6 +2,7 @@ package main
 
 import (
 	"HouseSpider/conf"
+	"HouseSpider/proxy"
 	"log"
 )
 
@@ -14,5 +15,8 @@ func main() {
 	if err != nil {
 		return
 	}
-	log.Println(*config)
+	proxyCtx := proxy.New(config.ProxyUrl)
+	proxyCtx.Fetch()
+	proxy, _ := proxyCtx.Get()
+	log.Println(proxy)
 }
