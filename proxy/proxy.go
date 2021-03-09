@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"HouseSpider/httpreq"
+	"HouseSpider/request"
 	"bufio"
 	"encoding/json"
 	"errors"
@@ -47,15 +47,18 @@ func (ctx *Context) parse(html string) {
 			log.Fatal("unmarsha json error")
 			continue
 		}
-		url := rawProxy.Type + "://" + rawProxy.Host + ":" + fmt.Sprint(rawProxy.Port)
-		proxy := Proxy{url: url}
-		ctx.proxies[url] = proxy
+		if rawProxy.Type == "https" {
+			url := "http://" + rawProxy.Host + ":" + fmt.Sprint(rawProxy.Port)
+			proxy := Proxy{url: url}
+			ctx.proxies[url] = proxy
+		}
 	}
 	log.Printf("total got %d proxies", len(ctx.proxies))
 }
 
 func (ctx *Context) Fetch() {
-	html, err := httpreq.Get(ctx.url, "")
+	req := request.New(nil)
+	html, err := req.Get(ctx.url, "")
 	if err != nil {
 		log.Println(err)
 		return
@@ -99,4 +102,16 @@ func (ctx *Context) IncErrCnt(url string) {
 		log.Fatalf("proxy: %s err cnt reach max, delete it", url)
 		delete(ctx.proxies, url)
 	}
+}
+
+func (ctx *Context) callback(urlStr, body string, err error, opaque interface{}) {
+
+}
+
+func (ctx *Context) Filter() {
+	req := request.New(ctx.callback)
+	for _, proxy := range ctx.proxies {
+		req.AsyncGet("http://httpbin.org/get", proxy.url, &proxy)
+	}
+	req.WaitAllDone()
 }
