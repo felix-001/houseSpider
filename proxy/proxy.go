@@ -27,6 +27,7 @@ type Proxy struct {
 type Context struct {
 	proxies map[string]Proxy
 	url     string
+	ip      string
 }
 
 func New(url string) *Context {
@@ -105,13 +106,22 @@ func (ctx *Context) IncErrCnt(url string) {
 }
 
 func (ctx *Context) callback(urlStr, body string, err error, opaque interface{}) {
+	if err != nil {
+		delete(ctx.proxies, opaque.(string))
+		return
+	}
+}
 
+func (ctx *Context) getIp() {
+	request := request.New(nil)
+	request.Get("")
 }
 
 func (ctx *Context) Filter() {
 	req := request.New(ctx.callback)
 	for _, proxy := range ctx.proxies {
-		req.AsyncGet("http://httpbin.org/get", proxy.url, &proxy)
+		req.AsyncGet("http://httpbin.org/get", proxy.url, proxy.url)
 	}
 	req.WaitAllDone()
+	log.Printf("after filter, valid proxy count: %d", len(ctx.proxies))
 }
