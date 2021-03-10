@@ -22,16 +22,17 @@ type Proxy struct {
 	url       string
 	timestamp int
 	reqErrCnt int
+	valid     bool
 }
 
 type Context struct {
-	proxies map[string]Proxy
+	proxies map[string]*Proxy
 	url     string
 	ip      string
 }
 
 func New(url string) *Context {
-	return &Context{url: url, proxies: map[string]Proxy{}}
+	return &Context{url: url, proxies: map[string]*Proxy{}}
 }
 
 func (ctx *Context) parse(html string) {
@@ -50,7 +51,7 @@ func (ctx *Context) parse(html string) {
 		}
 		if rawProxy.Type == "https" {
 			url := "http://" + rawProxy.Host + ":" + fmt.Sprint(rawProxy.Port)
-			proxy := Proxy{url: url}
+			proxy := &Proxy{url: url, valid: true}
 			ctx.proxies[url] = proxy
 		}
 	}
@@ -73,6 +74,9 @@ func (ctx *Context) isProxyAvailable(proxy *Proxy) bool {
 	if proxy.timestamp == 0 {
 		return true
 	}
+	if !proxy.valid {
+		return false
+	}
 	curTimestamp := time.Now().Second()
 	if curTimestamp-proxy.timestamp < ProxyWaitTime {
 		return false
@@ -84,7 +88,7 @@ var ErrNoAvailableProxy = errors.New("no availble proxy")
 
 func (ctx *Context) Get() (string, error) {
 	for _, proxy := range ctx.proxies {
-		if !ctx.isProxyAvailable(&proxy) {
+		if !ctx.isProxyAvailable(proxy) {
 			continue
 		}
 		proxy.timestamp = time.Now().Second()
@@ -100,18 +104,25 @@ func (ctx *Context) IncErrCnt(url string) {
 	proxy := ctx.proxies[url]
 	proxy.reqErrCnt++
 	if proxy.reqErrCnt == maxErrCnt {
-		log.Fatalf("proxy: %s err cnt reach max, delete it", url)
-		delete(ctx.proxies, url)
+		log.Printf("proxy: %s err cnt reach max, delete it", url)
+		proxy := ctx.proxies[url]
+		proxy.valid = false
 	}
 }
 
 func (ctx *Context) callback(urlStr, body string, err error, opaque interface{}) {
 	if err != nil {
-		delete(ctx.proxies, opaque.(string))
+		proxyUrl := opaque.(string)
+		log.Println(proxyUrl)
+		proxy := ctx.proxies[proxyUrl]
+		proxy.valid = false
 		return
 	}
 	if strings.Contains(body, ctx.ip) {
-		delete(ctx.proxies, opaque.(string))
+		proxyUrl := opaque.(string)
+		log.Println(proxyUrl)
+		proxy := ctx.proxies[proxyUrl]
+		proxy.valid = false
 		return
 	}
 }
@@ -136,6 +147,16 @@ func (ctx *Context) getIP() (string, error) {
 	return httpBin.Origin, nil
 }
 
+func (ctx *Context) GetValidProxyLen() int {
+	i := 0
+	for _, proxy := range ctx.proxies {
+		if proxy.valid {
+			i++
+		}
+	}
+	return i
+}
+
 func (ctx *Context) Filter() {
 	ip, err := ctx.getIP()
 	if err != nil {
@@ -148,5 +169,5 @@ func (ctx *Context) Filter() {
 		req.AsyncGet("https://httpbin.org/get", proxy.url, proxy.url)
 	}
 	req.WaitAllDone()
-	log.Printf("after filter, valid proxy count: %d", len(ctx.proxies))
+	log.Printf("after filter, valid proxy count: %d", ctx.GetValidProxyLen())
 }
