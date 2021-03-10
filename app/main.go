@@ -2,7 +2,7 @@ package main
 
 import (
 	"HouseSpider/conf"
-	"HouseSpider/request"
+	"HouseSpider/proxy"
 	"log"
 )
 
@@ -10,8 +10,8 @@ const confPath = "/usr/local/etc/house_spider.conf"
 
 func httpCallback(url, body string, err error, opaque interface{}) {
 	log.Println(url)
-	//log.Println(err)
-	//log.Println(body)
+	log.Println(err)
+	log.Println(body)
 }
 
 func main() {
@@ -22,14 +22,14 @@ func main() {
 		return
 	}
 	log.Printf("%+v", config)
-	request := request.New(httpCallback)
-	request.AsyncGet("http://httpbin.org/get?aaa=123", "", nil)
-	request.AsyncGet("http://httpbin.org/get?bbb=456", "", nil)
-	request.AsyncGet("http://httpbin.org/get?ccc=789", "", nil)
-	request.AsyncGet("http://httpbin.org/get?ccc=111", "", nil)
-	request.AsyncGet("http://httpbin.org/get?ccc=222", "", nil)
-	request.WaitAllDone()
-	//time.Sleep(10 * time.Second)
-	//ctx := proxy.New(config.ProxyUrl)
-	//ctx.Fetch()
+	proxy := proxy.New(config.ProxyUrl)
+	proxy.Fetch()
+	proxy.Filter()
+
+	//request := request.New(httpCallback)
+	//resp, err := request.Get("https://httpbin.org/get?aaa=bbb", "http://165.227.88.225:8080", nil)
+	//request.AsyncGet("https://httpbin.org/get?aaa=bbb", "http://165.227.88.225:8080", nil)
+	//request.WaitAllDone()
+	//log.Println(err)
+	//log.Println(resp)
 }

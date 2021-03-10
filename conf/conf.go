@@ -2,7 +2,6 @@ package conf
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -28,7 +27,7 @@ func Load(confPath string) (*Config, error) {
 			break
 		}
 		if err != nil {
-			fmt.Println("error decoding json:", err)
+			log.Println("error decoding json:", err)
 			return nil, err
 		}
 

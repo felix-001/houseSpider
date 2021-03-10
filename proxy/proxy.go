@@ -45,7 +45,7 @@ func (ctx *Context) parse(html string) {
 		var rawProxy RawProxy
 		err = json.Unmarshal(line, &rawProxy)
 		if err != nil {
-			log.Fatal("unmarsha json error")
+			log.Fatal("unmarsha json error ", err, " ", line)
 			continue
 		}
 		if rawProxy.Type == "https" {
@@ -59,7 +59,7 @@ func (ctx *Context) parse(html string) {
 
 func (ctx *Context) Fetch() {
 	req := request.New(nil)
-	html, err := req.Get(ctx.url, "")
+	html, err := req.Get(ctx.url, "", nil)
 	if err != nil {
 		log.Println(err)
 		return
@@ -110,17 +110,42 @@ func (ctx *Context) callback(urlStr, body string, err error, opaque interface{})
 		delete(ctx.proxies, opaque.(string))
 		return
 	}
+	if strings.Contains(body, ctx.ip) {
+		delete(ctx.proxies, opaque.(string))
+		return
+	}
 }
 
-func (ctx *Context) getIp() {
+type HTTPBin struct {
+	Origin string `json:"origin"`
+}
+
+func (ctx *Context) getIP() (string, error) {
 	request := request.New(nil)
-	request.Get("")
+	resp, err := request.Get("http://httpbin.org/get", "", nil)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	httpBin := &HTTPBin{}
+	err = json.Unmarshal([]byte(resp), &httpBin)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	return httpBin.Origin, nil
 }
 
 func (ctx *Context) Filter() {
+	ip, err := ctx.getIP()
+	if err != nil {
+		return
+	}
+	ctx.ip = ip
+	log.Println(ip)
 	req := request.New(ctx.callback)
 	for _, proxy := range ctx.proxies {
-		req.AsyncGet("http://httpbin.org/get", proxy.url, proxy.url)
+		req.AsyncGet("https://httpbin.org/get", proxy.url, proxy.url)
 	}
 	req.WaitAllDone()
 	log.Printf("after filter, valid proxy count: %d", len(ctx.proxies))

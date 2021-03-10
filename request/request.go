@@ -26,8 +26,7 @@ func New(cb HttpCallback) *Request {
 }
 
 func (r *Request) Get(urlStr, proxyStr string, opaque interface{}) (res string, err error) {
-	defer r.wg.Done()
-	cli := &http.Client{Timeout: 5 * time.Second}
+	cli := &http.Client{Timeout: 15 * time.Second}
 	if proxyStr != "" {
 		proxyURL, err := url.Parse(proxyStr)
 		if err != nil {
@@ -55,7 +54,7 @@ func (r *Request) Get(urlStr, proxyStr string, opaque interface{}) (res string, 
 	req.Header.Set("User-Agent", userAget)
 	resp, err := cli.Do(req)
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		return "", err
 	}
 	defer resp.Body.Close()
@@ -71,9 +70,14 @@ func (r *Request) Get(urlStr, proxyStr string, opaque interface{}) (res string, 
 	return string(body), nil
 }
 
+func (r *Request) get(urlStr, proxyStr string, opaque interface{}) {
+	r.Get(urlStr, proxyStr, opaque)
+	r.wg.Done()
+}
+
 func (r *Request) AsyncGet(urlStr, proxyStr string, opaque interface{}) {
 	r.wg.Add(1)
-	go r.Get(urlStr, proxyStr, opaque)
+	go r.get(urlStr, proxyStr, opaque)
 }
 
 func (r *Request) WaitAllDone() {
