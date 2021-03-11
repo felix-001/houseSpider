@@ -26,7 +26,7 @@ func New(cb HttpCallback) *Request {
 }
 
 func (r *Request) Get(urlStr, proxyStr string, opaque interface{}) (res string, err error) {
-	cli := &http.Client{Timeout: 15 * time.Second}
+	cli := &http.Client{Timeout: 10 * time.Second}
 	if proxyStr != "" {
 		proxyURL, err := url.Parse(proxyStr)
 		if err != nil {

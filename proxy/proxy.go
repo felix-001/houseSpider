@@ -113,7 +113,7 @@ func (ctx *Context) IncErrCnt(url string) {
 func (ctx *Context) callback(urlStr, body string, err error, opaque interface{}) {
 	if err != nil {
 		proxyUrl := opaque.(string)
-		log.Println(proxyUrl)
+		//log.Println(proxyUrl)
 		proxy := ctx.proxies[proxyUrl]
 		proxy.valid = false
 		return

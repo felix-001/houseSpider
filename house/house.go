@@ -4,10 +4,13 @@ import (
 	"HouseSpider/conf"
 	"HouseSpider/proxy"
 	"HouseSpider/request"
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 type House struct {
@@ -25,10 +28,17 @@ func New(conf *conf.Config, proxy *proxy.Context) *House {
 
 func (h *House) handleOverview(url, body string, err error) {
 	if err != nil {
-		log.Println(url)
-	} else {
-		log.Printf("err %s", url)
+		log.Println(err)
+		return
 	}
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader([]byte(body)))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	doc.Find("tr[class=pl]").Each(func(i int, selection *goquery.Selection) {
+		//log.Println(selection.Text())
+	})
 }
 
 func (h *House) httpCallback(url, body string, err error, opaque interface{}) {
@@ -51,15 +61,15 @@ func (h *House) getProxy() (string, error) {
 
 func (h *House) Fetch() {
 	for _, url := range h.conf.StartUrls {
-		url += h.conf.Keyword
 		start := 0
 		for i := 0; i < h.conf.MaxReq; i++ {
 			proxyUrl, err := h.getProxy()
 			if err != nil {
 				continue
 			}
-			url += "&start=" + fmt.Sprint(start)
-			h.request.AsyncGet(url, proxyUrl, "overview")
+			urlNew := url + h.conf.Keyword + "&start=" + fmt.Sprint(start)
+			log.Println(proxyUrl)
+			h.request.AsyncGet(urlNew, proxyUrl, "overview")
 			start += 50
 		}
 	}
