@@ -3,7 +3,6 @@ package main
 import (
 	"HouseSpider/conf"
 	"HouseSpider/house"
-	"HouseSpider/proxy"
 	"log"
 )
 
@@ -17,9 +16,6 @@ func main() {
 		return
 	}
 	log.Printf("%+v", config)
-	proxy := proxy.New(config.ProxyUrl)
-	proxy.Fetch()
-	proxy.Filter()
-	house := house.New(config, proxy)
-	house.Fetch()
+	h := house.New(config)
+	h.Fetch()
 }
