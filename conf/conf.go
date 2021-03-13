@@ -11,7 +11,10 @@ type Config struct {
 	StartUrls      []string `json:"start_urls"`
 	Keywords       []string `json:"keywords"`
 	FilterKeywords []string `json:"filter_keywords"`
+	Groups         []string `json:"groups"`
 	MininumChars   int      `json:"mininum_chars"` // 介绍详情至少要多少个文字
+	MaxPages       int      `json:"max_pages"`     // 每个小组最多爬多少个page
+	BaseUrl        string   `json:"base_url"`
 }
 
 func Load(confPath string) (*Config, error) {
