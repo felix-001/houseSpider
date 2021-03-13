@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	StartUrls      []string `json:"start_urls"`
-	Keyword        string   `json:"keywords"`
+	Keywords       []string `json:"keywords"`
 	FilterKeywords []string `json:"filter_keywords"`
 	MininumChars   int      `json:"mininum_chars"` // 介绍详情至少要多少个文字
 }

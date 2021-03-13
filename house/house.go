@@ -13,7 +13,7 @@ type House struct {
 	validUrls           []string
 	conf                *conf.Config
 	c                   *colly.Collector
-	cnt                 int
+	totalCnt            int
 	title               string
 	content             string
 	contentInvalidCnt   int
@@ -38,31 +38,23 @@ func New(conf *conf.Config) *House {
 	c.OnHTML("td[class=td-subject]>a[class]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		if !h.isValid(e.Text) {
-			log.Printf("drop %s %s\n", e.Text, link)
+			log.Printf("drop %s invalid keyword found in search page, %s\n", link, e.Text)
 			return
 		}
-		log.Printf("%03d %q -> %s\n", h.cnt, e.Text, link)
-		if h.cnt < 10 {
-			c.Visit(e.Request.AbsoluteURL(link))
-			time.Sleep(5 * time.Second)
-		}
-		h.cnt++
+		c.Visit(e.Request.AbsoluteURL(link))
+		time.Sleep(5 * time.Second)
 	})
 
 	c.OnHTML("div[class*=rich-content]>p", func(e *colly.HTMLElement) {
-		log.Printf("%q\n", e.Text)
 		h.content = e.Text
 	})
 
 	c.OnHTML("td[class=tablecc]", func(e *colly.HTMLElement) {
-		log.Printf("%s\n", e.Text)
 		h.title = e.Text
-		//h.saveUrl(e.Text, e.Request.URL.String())
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		//r.Headers.Set("Referer", "https://www.douban.com")
-		log.Println("Visiting", r.URL)
+		log.Println("+++++ Visiting", r.URL)
 	})
 
 	c.OnScraped(func(resp *colly.Response) {
@@ -70,15 +62,19 @@ func New(conf *conf.Config) *House {
 		if strings.Contains(url, "cat") {
 			return
 		}
+		h.totalCnt++
 		if len(h.content) < h.conf.MininumChars {
+			log.Printf("drop %s, content len < %d", url, h.conf.MininumChars)
 			h.contentTooLittleCnt++
 			return
 		}
 		if !h.isValid(h.content) {
+			log.Printf("drop %s, invalid keyword found in content detail", url)
 			h.contentInvalidCnt++
 			return
 		}
 		if !h.isValid(h.title) {
+			log.Printf("drop %s, invalid keyword found in title, %s", url, h.title)
 			h.titleInvalidCnt++
 			return
 		}
@@ -100,4 +96,5 @@ func (h *House) Fetch() {
 	log.Printf("content chars too little count: %d\n", h.contentTooLittleCnt)
 	log.Printf("content invalid count: %d\n", h.contentInvalidCnt)
 	log.Printf("title invalid count: %d\n", h.titleInvalidCnt)
+	log.Printf("total: %d", h.totalCnt)
 }
