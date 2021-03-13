@@ -8,13 +8,10 @@ import (
 )
 
 type Config struct {
-	ProxyUrl       string   `json:"proxy_url"`
 	StartUrls      []string `json:"start_urls"`
-	MaxReq         int      `json:"max_req"`
 	Keyword        string   `json:"keywords"`
 	FilterKeywords []string `json:"filter_keywords"`
-	MaxProxyRetry  int      `json:"max_proxy_retry"`
-	WaitProxyTime  int      `json:"wait_proxy_time"`
+	MininumChars   int      `json:"mininum_chars"` // 介绍详情至少要多少个文字
 }
 
 func Load(confPath string) (*Config, error) {
