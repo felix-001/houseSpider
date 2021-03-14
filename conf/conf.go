@@ -12,9 +12,10 @@ type Config struct {
 	Keywords       []string `json:"keywords"`
 	FilterKeywords []string `json:"filter_keywords"`
 	Groups         []string `json:"groups"`
-	MininumChars   int      `json:"mininum_chars"` // 介绍详情至少要多少个文字
-	MaxPages       int      `json:"max_pages"`     // 每个小组最多爬多少个page
-	MaxDays        int      `json:"max_days"`      // 过了多少天的帖子就不要了
+	FilterAuthors  []string `json:"filter_authors"` // 过滤作者id
+	MininumChars   int      `json:"mininum_chars"`  // 介绍详情至少要多少个文字
+	MaxPages       int      `json:"max_pages"`      // 每个小组最多爬多少个page
+	MaxDays        int      `json:"max_days"`       // 过了多少天的帖子就不要了
 	BaseUrl        string   `json:"base_url"`
 	ReqInterval    int      `json:"req_interval"`
 }

@@ -3,6 +3,7 @@ package house
 import (
 	"HouseSpider/conf"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"strings"
@@ -11,8 +12,13 @@ import (
 	"github.com/gocolly/colly"
 )
 
+type Post struct {
+	url   string
+	title string
+}
+
 type House struct {
-	validUrls           []string
+	validPosts          []Post
 	conf                *conf.Config
 	c                   *colly.Collector
 	totalCnt            int
@@ -89,7 +95,8 @@ func New(conf *conf.Config) *House {
 			h.contentInvalidCnt++
 			return
 		}
-		h.validUrls = append(h.validUrls, url)
+		post := Post{url: url, title: title}
+		h.validPosts = append(h.validPosts, post)
 		log.Printf("append url: %s to valid url list", url)
 	})
 
@@ -105,7 +112,28 @@ func New(conf *conf.Config) *House {
 	return h
 }
 
-func (h *House) Fetch() {
+func (h *House) saveHtml() {
+	str := ""
+	for _, post := range h.validPosts {
+		str += "<a href=\"" + post.url + "\">" + post.title + "</a><br>"
+	}
+	if err := ioutil.WriteFile("./houses.html", []byte(str), 0666); err != nil {
+		log.Println(err)
+	}
+}
+
+func (h *House) dumpStatistics() {
+	log.Printf("content chars too little count: %d\n", h.contentTooLittleCnt)
+	log.Printf("content invalid count: %d\n", h.contentInvalidCnt)
+	log.Printf("title invalid count: %d\n", h.titleInvalidCnt)
+	log.Printf("post too old count: %d", h.postTooOldCnt)
+	log.Printf("total: %d", h.totalCnt)
+	for k, v := range h.statistics {
+		log.Printf("%s ==> %d", k, v)
+	}
+}
+
+func (h *House) genQuerys() []string {
 	querys := []string{}
 	query := ""
 	i := 1
@@ -121,6 +149,11 @@ func (h *House) Fetch() {
 	if query != "" {
 		querys = append(querys, query)
 	}
+	return querys
+}
+
+func (h *House) Fetch() {
+	querys := h.genQuerys()
 	for _, group := range h.conf.Groups {
 		for _, query := range querys {
 			encodeQuery := url.QueryEscape(query)
@@ -135,13 +168,6 @@ func (h *House) Fetch() {
 			}
 		}
 	}
-	log.Printf("content chars too little count: %d\n", h.contentTooLittleCnt)
-	log.Printf("content invalid count: %d\n", h.contentInvalidCnt)
-	log.Printf("title invalid count: %d\n", h.titleInvalidCnt)
-	log.Printf("post too old count: %d", h.postTooOldCnt)
-	log.Printf("total: %d", h.totalCnt)
-	for k, v := range h.statistics {
-		log.Printf("%s ==> %d", k, v)
-	}
-	log.Println(h.validUrls)
+	h.dumpStatistics()
+	h.saveHtml()
 }
