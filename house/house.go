@@ -76,7 +76,7 @@ func New(conf *conf.Config) *House {
 
 	c.OnHTML("div[class=topic-doc]", func(e *colly.HTMLElement) {
 		url := e.Request.URL.String()
-		title := e.ChildAttr("td[class=tablecc]", "td")
+		title := e.ChildText("td[class=tablecc]")
 		if valid, keyword := h.isValid(title); !valid {
 			log.Printf("drop %s, invalid keyword found in title, %s, keyword: %s", url, title, keyword)
 			h.statistics[keyword]++
@@ -115,7 +115,7 @@ func New(conf *conf.Config) *House {
 func (h *House) saveHtml() {
 	str := ""
 	for _, post := range h.validPosts {
-		str += "<a href=\"" + post.url + "\">" + post.title + "</a><br>"
+		str += "<a href=\"" + post.url + "\">" + post.title + "</a><br>\n"
 	}
 	if err := ioutil.WriteFile("./houses.html", []byte(str), 0666); err != nil {
 		log.Println(err)
