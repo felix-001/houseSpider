@@ -27,15 +27,24 @@ type House struct {
 	contentTooLittleCnt int            // 介绍详情文字太少了
 	statistics          map[string]int // 统计各个关键字过滤的url个数
 	postTooOldCnt       int
+	originTitle         string
 }
 
-func (h *House) isValid(txt string) (bool, string) {
-	for _, keyword := range h.conf.FilterKeywords {
+func (h *House) isValid(txt string, keywords []string) (bool, string) {
+	for _, keyword := range keywords {
 		if strings.Contains(txt, keyword) {
 			return false, keyword
 		}
 	}
 	return true, ""
+}
+
+func (h *House) isKeywordValid(txt string) (bool, string) {
+	return h.isValid(txt, h.conf.FilterKeywords)
+}
+
+func (h *House) isAuthorValid(author string) (bool, string) {
+	return h.isValid(author, h.conf.FilterAuthors)
 }
 
 func (s *House) str2time(timestr string) (time.Time, error) {
@@ -55,7 +64,8 @@ func New(conf *conf.Config) *House {
 		}()
 		link := e.ChildAttr("a[class]", "href")
 		title := e.ChildAttr("td[class=td-subject]>a", "title")
-		if valid, keyword := h.isValid(title); !valid {
+		h.originTitle = title
+		if valid, keyword := h.isKeywordValid(title); !valid {
 			h.statistics[keyword]++
 			log.Printf("drop %s, invalid keyword found in search page, %s, keyword: %s\n", link, title, keyword)
 			return
@@ -76,8 +86,12 @@ func New(conf *conf.Config) *House {
 
 	c.OnHTML("div[class=topic-doc]", func(e *colly.HTMLElement) {
 		url := e.Request.URL.String()
+		author := e.ChildAttr("span[class=from]>a", "href")
+		if valid, _author := h.isAuthorValid(author); !valid {
+			log.Printf("drop %s, invalid author found, %s, author: %s", author, _author)
+		}
 		title := e.ChildText("td[class=tablecc]")
-		if valid, keyword := h.isValid(title); !valid {
+		if valid, keyword := h.isKeywordValid(title); !valid {
 			log.Printf("drop %s, invalid keyword found in title, %s, keyword: %s", url, title, keyword)
 			h.statistics[keyword]++
 			h.titleInvalidCnt++
@@ -89,11 +103,16 @@ func New(conf *conf.Config) *House {
 			h.contentTooLittleCnt++
 			return
 		}
-		if valid, keyword := h.isValid(content); !valid {
+		if valid, keyword := h.isKeywordValid(content); !valid {
 			log.Printf("drop %s, invalid keyword found in content detail, keyword:%s, content: %s", url, keyword, content)
 			h.statistics[keyword]++
 			h.contentInvalidCnt++
 			return
+		}
+		if title == "" {
+			// 有的详情的帖子标题不是放到topic-doc里面的
+			// 是放在div[class=otice-info]>h1里面的
+			title = h.originTitle
 		}
 		post := Post{url: url, title: title}
 		h.validPosts = append(h.validPosts, post)
@@ -114,8 +133,8 @@ func New(conf *conf.Config) *House {
 
 func (h *House) saveHtml() {
 	str := ""
-	for _, post := range h.validPosts {
-		str += "<a href=\"" + post.url + "\">" + post.title + "</a><br>\n"
+	for i, post := range h.validPosts {
+		str += "<a href=\"" + post.url + "\">" + "[" + fmt.Sprint(i) + "]" + post.title + "</a><br>\n"
 	}
 	if err := ioutil.WriteFile("./houses.html", []byte(str), 0666); err != nil {
 		log.Println(err)
