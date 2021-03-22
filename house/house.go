@@ -27,6 +27,7 @@ type House struct {
 	contentTooLittleCnt int            // 介绍详情文字太少了
 	statistics          map[string]int // 统计各个关键字过滤的url个数
 	postTooOldCnt       int
+	invalidAuthorCnt    int
 	originTitle         string
 }
 
@@ -88,7 +89,9 @@ func New(conf *conf.Config) *House {
 		url := e.Request.URL.String()
 		author := e.ChildAttr("span[class=from]>a", "href")
 		if valid, _author := h.isAuthorValid(author); !valid {
-			log.Printf("drop %s, invalid author found, %s, author: %s", author, _author)
+			log.Printf("drop %s, invalid author found, %s, author: %s", url, author, _author)
+			h.invalidAuthorCnt++
+			return
 		}
 		title := e.ChildText("td[class=tablecc]")
 		if valid, keyword := h.isKeywordValid(title); !valid {
@@ -145,10 +148,11 @@ func (h *House) dumpStatistics() {
 	log.Printf("content chars too little count: %d\n", h.contentTooLittleCnt)
 	log.Printf("content invalid count: %d\n", h.contentInvalidCnt)
 	log.Printf("title invalid count: %d\n", h.titleInvalidCnt)
-	log.Printf("post too old count: %d", h.postTooOldCnt)
-	log.Printf("total: %d", h.totalCnt)
+	log.Printf("post too old count: %d\n", h.postTooOldCnt)
+	log.Printf("invalid author count: %d\n", h.invalidAuthorCnt)
+	log.Printf("total: %d\n", h.totalCnt)
 	for k, v := range h.statistics {
-		log.Printf("%s ==> %d", k, v)
+		log.Printf("%s ==> %d\n", k, v)
 	}
 }
 
