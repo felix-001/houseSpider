@@ -124,7 +124,7 @@ func savePNG(secondhands, news plotter.XYs) error {
 		return err
 	}
 
-	if err := p.Save(4*vg.Inch, 4*vg.Inch, PngFile); err != nil {
+	if err := p.Save(8*vg.Inch, 8*vg.Inch, PngFile); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -158,7 +158,7 @@ func parseCSV() (plotter.XYs, plotter.XYs, error) {
 				return nil, nil, err
 			}
 			new := plotter.XY{X: float64(i), Y: float64(y)}
-			news = append(seconds, new)
+			news = append(news, new)
 		}
 		i++
 	}
@@ -179,6 +179,7 @@ func main() {
 	if err != nil {
 		return
 	}
+	log.Println(seconds, news)
 	if err := savePNG(seconds, news); err != nil {
 		log.Println(err)
 		return
