@@ -115,7 +115,7 @@ def check_post_valid(post, posts):
 
     found = 0
 
-    if len(post['content']) < 200:
+    if len(post['content']) < 150:
         words_too_less_cnt += 1
         return False
     if len(config.KEYWORDS) > 0:
