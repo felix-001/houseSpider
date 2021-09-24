@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -8,13 +9,28 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
+
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 )
 
 var (
 	ErrStatusCode = errors.New("status code err")
 	ErrParseHtml  = errors.New("parse html err")
+)
+
+const (
+	Second  = "北京在售二手房"
+	New     = "北京在售新房楼盘"
+	Title   = "北京房源走势图"
+	CsvFile = "./data.csv"
+	PngFile = "./output.png"
+	Url     = "https://bj.ke.com/"
 )
 
 func httpGet(url string) (string, error) {
@@ -48,15 +64,15 @@ func getData(raw, key string) (string, error) {
 }
 
 func getHouseData() (string, string, error) {
-	body, err := httpGet("https://bj.ke.com/")
+	body, err := httpGet(Url)
 	if err != nil {
 		return "", "", err
 	}
-	secondhand, err := getData(body, "北京在售二手房 ")
+	secondhand, err := getData(body, Second+" ")
 	if err != nil {
 		return "", "", err
 	}
-	new, err := getData(body, "北京在售新房楼盘 ")
+	new, err := getData(body, New+" ")
 	if err != nil {
 		return "", "", err
 	}
@@ -64,19 +80,18 @@ func getHouseData() (string, string, error) {
 }
 
 func appendDataToCSV(secondhand, new string) error {
-	file := "./data.csv"
-	f, err := os.OpenFile(file, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
+	f, err := os.OpenFile(CsvFile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	fi, err := os.Stat(file)
+	fi, err := os.Stat(CsvFile)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 	if fi.Size() == 0 {
-		_, err = io.WriteString(f, "日期, 在售二手房, 在售新房楼盘\n")
+		_, err = io.WriteString(f, "日期, "+Second+", "+New+"\n")
 		if err != nil {
 			log.Println(err)
 			return err
@@ -94,6 +109,62 @@ func appendDataToCSV(secondhand, new string) error {
 	return nil
 }
 
+func savePNG(secondhands, news plotter.XYs) error {
+	p := plot.New()
+
+	p.Title.Text = Title
+	p.X.Label.Text = Second
+	p.Y.Label.Text = New
+
+	err := plotutil.AddLinePoints(p,
+		Second, secondhands,
+		New, news)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if err := p.Save(4*vg.Inch, 4*vg.Inch, PngFile); err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func parseCSV() (plotter.XYs, plotter.XYs, error) {
+	file, err := os.Open(CsvFile)
+	if err != nil {
+		log.Fatal(err)
+		return nil, nil, err
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	seconds := plotter.XYs{}
+	news := plotter.XYs{}
+	i := 0
+	for scanner.Scan() {
+		if i > 0 {
+			items := strings.Split(scanner.Text(), ",")
+			y, err := strconv.Atoi(strings.TrimSpace(items[1]))
+			if err != nil {
+				log.Println(err)
+				return nil, nil, err
+			}
+			second := plotter.XY{X: float64(i), Y: float64(y)}
+			seconds = append(seconds, second)
+			y, err = strconv.Atoi(strings.TrimSpace(items[2]))
+			if err != nil {
+				log.Println(err)
+				return nil, nil, err
+			}
+			new := plotter.XY{X: float64(i), Y: float64(y)}
+			news = append(seconds, new)
+		}
+		i++
+	}
+	return seconds, news, nil
+}
+
 func main() {
 	log.SetFlags(log.Lshortfile)
 	secondhand, new, err := getHouseData()
@@ -104,4 +175,12 @@ func main() {
 		return
 	}
 	log.Println(secondhand, new)
+	seconds, news, err := parseCSV()
+	if err != nil {
+		return
+	}
+	if err := savePNG(seconds, news); err != nil {
+		log.Println(err)
+		return
+	}
 }
