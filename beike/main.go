@@ -63,33 +63,19 @@ func getHouseData() (string, string, error) {
 	return secondhand, new, nil
 }
 
-func exist(path string) bool {
-	_, err := os.Stat(path) //os.Stat获取文件信息
-	if err != nil {
-		if os.IsExist(err) {
-			return true
-		}
-		return false
-	}
-	return true
-}
-
 func appendDataToCSV(secondhand, new string) error {
-	var f *os.File
-	var err error
 	file := "./data.csv"
-	if exist(file) {
-		f, err = os.OpenFile(file, os.O_RDWR|os.O_APPEND, 0666)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-	} else {
-		f, err = os.Create(file)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
+	f, err := os.OpenFile(file, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	fi, err := os.Stat(file)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if fi.Size() == 0 {
 		_, err = io.WriteString(f, "日期, 在售二手房, 在售新房楼盘\n")
 		if err != nil {
 			log.Println(err)
