@@ -9,10 +9,11 @@
 
 ## 运行
 ```
-python3 root.py
+python3 room.py
 ```
 
 ## author
-- mail:rigensen@qq.com
+- mail: rigensen@qq.com
+- 博客: https://blog.csdn.net/qq_39977813
 
 
