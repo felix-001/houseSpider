@@ -28,8 +28,8 @@ const (
 	Second  = "北京在售二手房"
 	New     = "北京在售新房楼盘"
 	Title   = "北京房源走势图"
-	CsvFile = "./data.csv"
-	PngFile = "./output.png"
+	CsvFile = "/Users/rigensen/workspace/learn/houseSpider/beike/data.csv"
+	PngFile = "/Users/rigensen/workspace/learn/houseSpider/beike/output.png"
 	Url     = "https://bj.ke.com/"
 )
 
@@ -116,9 +116,7 @@ func savePNG(secondhands, news plotter.XYs) error {
 	p.X.Label.Text = "time"
 	p.Y.Label.Text = "house count"
 
-	err := plotutil.AddLinePoints(p,
-		Second, secondhands,
-		/*New, news*/)
+	err := plotutil.AddLinePoints(p, Second, secondhands)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -140,7 +138,6 @@ func parseCSV() (plotter.XYs, plotter.XYs, error) {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	seconds := plotter.XYs{}
-	//news := plotter.XYs{}
 	i := 0
 	for scanner.Scan() {
 		if i > 0 {
@@ -152,15 +149,6 @@ func parseCSV() (plotter.XYs, plotter.XYs, error) {
 			}
 			second := plotter.XY{X: float64(i), Y: float64(y)}
 			seconds = append(seconds, second)
-			/*
-				y, err = strconv.Atoi(strings.TrimSpace(items[2]))
-				if err != nil {
-					log.Println(err)
-					return nil, nil, err
-				}
-				new := plotter.XY{X: float64(i), Y: float64(y)}
-				news = append(news, new)
-			*/
 		}
 		i++
 	}
