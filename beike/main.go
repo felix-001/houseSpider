@@ -30,7 +30,7 @@ const (
 	New     = "北京在售新房楼盘"
 	Title   = "北京房源走势图"
 	CsvFile = "/Users/rigensen/workspace/learn/houseSpider/beike/data.csv"
-	PngFile = "/Users/rigensen/workspace/learn/houseSpider/beike/output.png"
+	PngFile = "/Users/rigensen/workspace/learn/houseSpider/beike/二手房源数量走势图.png"
 	Url     = "https://bj.ke.com/"
 )
 
