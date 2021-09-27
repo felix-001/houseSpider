@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -155,6 +156,11 @@ func parseCSV() (plotter.XYs, plotter.XYs, error) {
 	return seconds, nil, nil
 }
 
+func showPNG() {
+	cmd := exec.Command("open", PngFile)
+	cmd.Run()
+}
+
 func main() {
 	log.SetFlags(log.Lshortfile)
 	secondhand, new, err := getHouseData()
@@ -174,4 +180,5 @@ func main() {
 		log.Println(err)
 		return
 	}
+	showPNG()
 }
