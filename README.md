@@ -17,3 +17,5 @@ python3 room.py
 - 博客: https://blog.csdn.net/qq_39977813
 
 
+# 二手房源数量走势图
+![图](./beike/二手房源数量走势图.png)
