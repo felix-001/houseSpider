@@ -161,6 +161,20 @@ func showPNG() {
 	cmd.Run()
 }
 
+func uploadPNG() {
+	cmd := exec.Command("bash", "-c", `cd /Users/rigensen/workspace/learn/houseSpider/beike; 
+			     /usr/bin/git add .;
+			     /usr/bin/git commit -m "update";
+			     /usr/bin/git push`)
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println(string(b))
+
+}
+
 func main() {
 	log.SetFlags(log.Lshortfile)
 	secondhand, new, err := getHouseData()
@@ -181,4 +195,5 @@ func main() {
 		return
 	}
 	showPNG()
+	uploadPNG()
 }
