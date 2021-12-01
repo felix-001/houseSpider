@@ -245,7 +245,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	regions := []string{"东坝"}
+	regions := []string{"东坝", "望京"}
 	nums, err := getRegionHouseData(regions)
 	if err != nil {
 		return
@@ -268,6 +268,10 @@ func main() {
 		return
 	}
 	if err := savePNG("东坝二手房源走势图", "time", "house count", xys[2]); err != nil {
+		log.Println(err)
+		return
+	}
+	if err := savePNG("望京二手房源走势图", "time", "house count", xys[3]); err != nil {
 		log.Println(err)
 		return
 	}
