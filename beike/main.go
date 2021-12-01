@@ -260,7 +260,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	log.Println(len(xys))
+	log.Println(len(xys), len(xys[0]))
 	if err := savePNG(Title, "time", "house count", xys[0]); err != nil {
 		log.Println(err)
 		return
