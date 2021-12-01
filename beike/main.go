@@ -80,7 +80,48 @@ func getHouseData() (string, string, error) {
 	return secondhand, new, nil
 }
 
-func appendDataToCSV(secondhand, new string) error {
+func getRegionData(raw string) (string, error) {
+	start := strings.Index(raw, "共找到")
+	if start == -1 {
+		log.Println("parse html error")
+		return "", ErrParseHtml
+	}
+	start += len("共找到")
+	new := raw[start:]
+	start = strings.Index(new, "<span>")
+	if start == -1 {
+		log.Println("parse html error")
+		return "", ErrParseHtml
+	}
+	start += len("<span>")
+	new = new[start:]
+	end := strings.Index(new, " </span>")
+	if end == -1 {
+		log.Println("parse html error")
+		return "", ErrParseHtml
+	}
+	log.Println(new[:end])
+	return new[:end], nil
+}
+
+func getRegionHouseData(regions []string) ([]string, error) {
+	nums := []string{}
+	for _, region := range regions {
+		addr := fmt.Sprintf("https://bj.ke.com/ershoufang/rs%s/", region)
+		body, err := httpGet(addr)
+		if err != nil {
+			return nil, err
+		}
+		num, err := getRegionData(body)
+		if err != nil {
+			return nil, err
+		}
+		nums = append(nums, num)
+	}
+	return nums, nil
+}
+
+func appendDataToCSV(secondhand, new string, regionNums []string) error {
 	f, err := os.OpenFile(CsvFile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println(err)
@@ -100,7 +141,11 @@ func appendDataToCSV(secondhand, new string) error {
 	}
 	defer f.Close()
 	date := time.Now().Format("2006-01-02 15:04:05")
-	s := date + ", " + secondhand + ", " + new + "\n"
+	s := date + ", " + secondhand + ", " + new
+	for _, num := range regionNums {
+		s += num + ", "
+	}
+	s += "\n"
 	_, err = io.WriteString(f, s)
 	if err != nil {
 		log.Println(err)
@@ -181,7 +226,12 @@ func main() {
 	if err != nil {
 		return
 	}
-	if err := appendDataToCSV(secondhand, new); err != nil {
+	regions := []string{"东坝"}
+	nums, err := getRegionHouseData(regions)
+	if err != nil {
+		return
+	}
+	if err := appendDataToCSV(secondhand, new, nums); err != nil {
 		return
 	}
 	log.Println(secondhand, new)
