@@ -221,7 +221,7 @@ func parseCSV() ([]plotter.XYs, error) {
 }
 
 func showPNG() {
-	cmd := exec.Command("open", "https://github.com/felix-001/houseSpider")
+	cmd := exec.Command("open", "https://github.com/felix-001/houseSpider/blob/v2/README.md")
 	cmd.Run()
 }
 
