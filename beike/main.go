@@ -184,20 +184,24 @@ func parseCSV() ([]plotter.XYs, error) {
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	xys := make([]plotter.XYs, 10)
-	for idx := range xys {
-		xys[idx] = make(plotter.XYs, 0)
-	}
-	i := 0
+	var xyss []plotter.XYs
+	line := 0
 	for scanner.Scan() {
-		if i == 0 {
-			i++
+		if line == 0 {
+			line++
 			continue
 		}
 		items := strings.Split(scanner.Text(), ",")
 		idx := 0
 		//log.Println(len(items))
 		for _, item := range items {
+			if xyss == nil {
+				xyss = make([]plotter.XYs, len(items))
+			} else if len(items) > len(xyss) {
+				len := len(items) - len(xyss)
+				new := make([]plotter.XYs, len)
+				xyss = append(xyss, new...)
+			}
 			if idx == 0 {
 				idx++
 				continue
@@ -207,13 +211,13 @@ func parseCSV() ([]plotter.XYs, error) {
 				log.Println(err)
 				return nil, err
 			}
-			xy := plotter.XY{X: float64(i), Y: float64(y)}
-			xys[idx] = append(xys[idx], xy)
+			xy := plotter.XY{X: float64(line), Y: float64(y)}
+			xyss[idx] = append(xyss[idx], xy)
 			idx++
 		}
-		i++
+		line++
 	}
-	return xys, nil
+	return xyss, nil
 }
 
 /*
