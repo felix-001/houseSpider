@@ -220,12 +220,10 @@ func parseCSV() ([]plotter.XYs, error) {
 	return xyss, nil
 }
 
-/*
 func showPNG() {
-	cmd := exec.Command("open", PngFile)
+	cmd := exec.Command("open", "https://github.com/felix-001/houseSpider")
 	cmd.Run()
 }
-*/
 
 func uploadPNG() {
 	cmd := exec.Command("bash", "-c", `cd /Users/rigensen/workspace/learn/houseSpider/beike; 
