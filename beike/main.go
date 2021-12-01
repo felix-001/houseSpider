@@ -88,12 +88,12 @@ func getRegionData(raw string) (string, error) {
 	}
 	start += len("共找到")
 	new := raw[start:]
-	start = strings.Index(new, "<span>")
+	start = strings.Index(new, "<span> ")
 	if start == -1 {
 		log.Println("parse html error")
 		return "", ErrParseHtml
 	}
-	start += len("<span>")
+	start += len("<span> ")
 	new = new[start:]
 	end := strings.Index(new, " </span>")
 	if end == -1 {
