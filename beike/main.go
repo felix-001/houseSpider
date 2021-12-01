@@ -265,6 +265,14 @@ func main() {
 		log.Println(err)
 		return
 	}
+	if err := savePNG("北京全区域新房走势图", "time", "house count", xys[1]); err != nil {
+		log.Println(err)
+		return
+	}
+	if err := savePNG("东坝二手房源走势图", "time", "house count", xys[1]); err != nil {
+		log.Println(err)
+		return
+	}
 	//showPNG()
 	uploadPNG()
 }
