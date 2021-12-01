@@ -143,7 +143,7 @@ func appendDataToCSV(secondhand, new string, regionNums []string) error {
 	date := time.Now().Format("2006-01-02 15:04:05")
 	s := date + ", " + secondhand + ", " + new
 	for _, num := range regionNums {
-		s += num + ", "
+		s += ", " + num
 	}
 	s += "\n"
 	_, err = io.WriteString(f, s)
