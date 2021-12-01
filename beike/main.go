@@ -168,7 +168,7 @@ func savePNG(title, xLabel, yLabel string, xys plotter.XYs) error {
 		return err
 	}
 
-	pngFile := fmt.Sprintf("%s/%d.png", PngPath, title)
+	pngFile := fmt.Sprintf("%s/%s.png", PngPath, title)
 	if err := p.Save(8*vg.Inch, 8*vg.Inch, pngFile); err != nil {
 		log.Println(err)
 		return err
