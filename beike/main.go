@@ -28,9 +28,9 @@ var (
 const (
 	Second  = "北京在售二手房"
 	New     = "北京在售新房楼盘"
-	Title   = "北京房源走势图"
+	Title   = "北京全区域二手房源走势图"
 	CsvFile = "/Users/rigensen/workspace/learn/houseSpider/beike/data.csv"
-	PngFile = "/Users/rigensen/workspace/learn/houseSpider/beike/二手房源数量走势图.png"
+	PngPath = "/Users/rigensen/workspace/learn/houseSpider/beike"
 	Url     = "https://bj.ke.com/"
 )
 
@@ -155,56 +155,73 @@ func appendDataToCSV(secondhand, new string, regionNums []string) error {
 	return nil
 }
 
-func savePNG(secondhands, news plotter.XYs) error {
+func savePNG(title, xLabel, yLabel string, xys plotter.XYs) error {
 	p := plot.New()
 
-	p.Title.Text = Title
-	p.X.Label.Text = "time"
-	p.Y.Label.Text = "house count"
+	p.Title.Text = title
+	p.X.Label.Text = xLabel
+	p.Y.Label.Text = yLabel
 
-	err := plotutil.AddLinePoints(p, Second, secondhands)
+	err := plotutil.AddLinePoints(p, Second, xys)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	if err := p.Save(8*vg.Inch, 8*vg.Inch, PngFile); err != nil {
+	pngFile := fmt.Sprintf("%s/%d.png", PngPath, title)
+	if err := p.Save(8*vg.Inch, 8*vg.Inch, pngFile); err != nil {
 		log.Println(err)
 		return err
 	}
 	return nil
 }
 
-func parseCSV() (plotter.XYs, plotter.XYs, error) {
+func parseCSV() ([]plotter.XYs, error) {
 	file, err := os.Open(CsvFile)
 	if err != nil {
 		log.Fatal(err)
-		return nil, nil, err
+		return nil, err
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	seconds := plotter.XYs{}
+	xys := make([]plotter.XYs, 10)
+	for idx := range xys {
+		xys[idx] = make(plotter.XYs, 0)
+	}
 	i := 0
 	for scanner.Scan() {
-		if i > 0 {
-			items := strings.Split(scanner.Text(), ",")
-			y, err := strconv.Atoi(strings.TrimSpace(items[1]))
+		if i == 0 {
+			i++
+			continue
+		}
+		items := strings.Split(scanner.Text(), ",")
+		idx := 0
+		//log.Println(len(items))
+		for _, item := range items {
+			if idx == 0 {
+				idx++
+				continue
+			}
+			y, err := strconv.Atoi(strings.TrimSpace(item))
 			if err != nil {
 				log.Println(err)
-				return nil, nil, err
+				return nil, err
 			}
-			second := plotter.XY{X: float64(i), Y: float64(y)}
-			seconds = append(seconds, second)
+			xy := plotter.XY{X: float64(i), Y: float64(y)}
+			xys[idx] = append(xys[idx], xy)
+			idx++
 		}
 		i++
 	}
-	return seconds, nil, nil
+	return xys, nil
 }
 
+/*
 func showPNG() {
 	cmd := exec.Command("open", PngFile)
 	cmd.Run()
 }
+*/
 
 func uploadPNG() {
 	cmd := exec.Command("bash", "-c", `cd /Users/rigensen/workspace/learn/houseSpider/beike; 
@@ -235,15 +252,15 @@ func main() {
 		return
 	}
 	log.Println(secondhand, new)
-	seconds, news, err := parseCSV()
+	xys, err := parseCSV()
 	if err != nil {
 		return
 	}
-	log.Println(seconds, news)
-	if err := savePNG(seconds, news); err != nil {
+	log.Println(len(xys))
+	if err := savePNG(Title, "time", "house count", xys[0]); err != nil {
 		log.Println(err)
 		return
 	}
-	showPNG()
+	//showPNG()
 	uploadPNG()
 }
