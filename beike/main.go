@@ -271,6 +271,6 @@ func main() {
 		log.Println(err)
 		return
 	}
-	//showPNG()
+	showPNG()
 	uploadPNG()
 }
