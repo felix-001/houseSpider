@@ -212,7 +212,7 @@ func parseCSV() ([]plotter.XYs, error) {
 				return nil, err
 			}
 			xy := plotter.XY{X: float64(line), Y: float64(y)}
-			xyss[idx] = append(xyss[idx], xy)
+			xyss[idx-1] = append(xyss[idx-1], xy)
 			idx++
 		}
 		line++
