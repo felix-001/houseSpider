@@ -57,7 +57,7 @@ func (s *House) str2time(timestr string) (time.Time, error) {
 func New(conf *conf.Config) *House {
 	h := &House{conf: conf, statistics: map[string]int{}}
 	c := colly.NewCollector(
-		colly.UserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36"),
+		colly.UserAgent("Mozilla/5.1 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/539.38"),
 	)
 	c.OnHTML("tr[class=pl]", func(e *colly.HTMLElement) {
 		defer func() {
@@ -128,7 +128,7 @@ func New(conf *conf.Config) *House {
 	})
 
 	c.OnError(func(resp *colly.Response, err error) {
-		log.Println(err)
+		log.Println(resp.Request.URL.String(), err, resp.StatusCode)
 	})
 	h.c = c
 	return h
@@ -176,9 +176,8 @@ func (h *House) genQuerys() []string {
 }
 
 func (h *House) Fetch() {
-	querys := h.genQuerys()
 	for _, group := range h.conf.Groups {
-		for _, query := range querys {
+		for _, query := range h.conf.Keywords {
 			encodeQuery := url.QueryEscape(query)
 			for i := 0; i < h.conf.MaxPages; i++ {
 				urlNew := h.conf.BaseUrl +
