@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gocolly/colly"
+	"github.com/gocolly/colly/v2"
 )
 
 type Post struct {
@@ -57,7 +57,7 @@ func (s *House) str2time(timestr string) (time.Time, error) {
 func New(conf *conf.Config) *House {
 	h := &House{conf: conf, statistics: map[string]int{}}
 	c := colly.NewCollector(
-		colly.UserAgent("Mozilla/5.1 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/539.38"),
+		colly.UserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"),
 	)
 	c.OnHTML("tr[class=pl]", func(e *colly.HTMLElement) {
 		defer func() {
